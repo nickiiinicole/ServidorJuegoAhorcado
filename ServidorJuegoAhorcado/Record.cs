@@ -27,6 +27,7 @@ namespace ServidorJuegoAhorcado
         public int Seconds
         {
             get { return seconds; }
+
             set { seconds = value; }
         }
 
