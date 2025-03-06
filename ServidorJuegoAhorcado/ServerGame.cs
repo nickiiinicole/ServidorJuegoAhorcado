@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace ServidorJuegoAhorcado
 {
 
-    internal class ServerGame
+    internal class ServerGame//Startswith, send cadena vacia. Comprobación en sendrecord sin ; y nombre cadena vacia. Serverclose+espacio o pass no valida
     {
         public List<string> words = new List<string>();
         public List<Record> records = new List<Record>();
@@ -112,8 +112,13 @@ namespace ServidorJuegoAhorcado
                             sw.Flush();
                             clientSocket.Close();
                             break;
-                        case string com when partsCommand.Length == 2 && partsCommand[0].StartsWith("sendword"):
+                        case string com when partsCommand.Length == 2 && partsCommand[0] == ("sendword"):
 
+                            if (string.IsNullOrEmpty(partsCommand[1].Trim()))
+                            {
+                                sw.WriteLine("ERROR");
+                                sw.Flush();
+                            }
                             if (SendWord(partsCommand[1], wordsPath))
                             {
                                 sw.WriteLine("OK");
@@ -133,7 +138,7 @@ namespace ServidorJuegoAhorcado
                             sw.Flush();
                             clientSocket.Close();
                             break;
-                        case string com when partsCommand.Length == 2 && partsCommand[0].StartsWith("sendrecord"):
+                        case string com when partsCommand.Length == 2 && partsCommand[0] == ("sendrecord"):
                             //la manera que veo que es un record , una cadena donde va primero el  nombre separado por ; y segundos .
 
                             string[] dataRecord = partsCommand[1].Split(';');
@@ -142,6 +147,14 @@ namespace ServidorJuegoAhorcado
                                 sw.WriteLine("REJECT");
                                 sw.Flush();
                                 clientSocket.Close();
+                                return;
+                            }
+                            if (string.IsNullOrEmpty(dataRecord[0].Trim()))
+                            {
+                                sw.WriteLine("REJECT");
+                                sw.Flush();
+                                clientSocket.Close();
+                                return;
                             }
                             if (int.TryParse(dataRecord[1], out int seconds))
                             {
@@ -157,13 +170,19 @@ namespace ServidorJuegoAhorcado
                             sw.Flush();
                             clientSocket.Close();
                             break;
-                        case string com when partsCommand.Length == 2 && partsCommand[0].StartsWith("serverclose"):
+                        case string com when partsCommand.Length == 2 && partsCommand[0] == ("serverclose"):
+
                             if (int.TryParse(partsCommand[1], out int pinSend) && pinSend == pin)
                             {
                                 clientSocket.Close();
                                 socketServer.Close();
                                 return;
                             }
+
+                            sw.WriteLine("Invalid PIN. Disconnecting...");
+                            sw.Flush();
+                            clientSocket.Close();
+
                             break;
 
                         default:
@@ -269,7 +288,7 @@ namespace ServidorJuegoAhorcado
             catch (Exception e) when (e is SocketException | e is ArgumentException)
             {
                 return false;
-                throw;
+
             }
         }
 
